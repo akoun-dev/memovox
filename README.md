@@ -50,6 +50,16 @@ lib/
 
 ---
 
+## 🚧 État actuel du projet
+
+Cette version fournit une base fonctionnelle comprenant :
+
+- l'initialisation de Supabase via `SupabaseService` ;
+- la gestion d'une liste de tâches persistée dans la table `tasks` ;
+- un écran d'accueil permettant d'afficher et d'ajouter des tâches avec Riverpod.
+
+---
+
 ## 🔧 Installation locale
 
 ### 1. Prérequis
