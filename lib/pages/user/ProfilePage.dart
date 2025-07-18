@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memovox/core/layout/AppDrawer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -9,6 +10,36 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final user = Supabase.instance.client.auth.currentUser;
+    _nameController.text = user?.userMetadata?['full_name'] ?? '';
+    _phoneController.text = user?.phone ?? '';
+    _emailController.text = user?.email ?? '';
+  }
+
+  Future<void> _save() async {
+    final client = Supabase.instance.client;
+    try {
+      await client.auth.updateUser(UserAttributes(
+        data: {'full_name': _nameController.text},
+        phone: _phoneController.text.isEmpty ? null : _phoneController.text,
+      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil mis \u00e0 jour')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur : $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,20 +58,34 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Prénom Nom'),
-              subtitle: const Text('John Doe'),
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nom complet',
+                prefixIcon: Icon(Icons.person),
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.email),
-              title: const Text('Email'),
-              subtitle: const Text('john.doe@example.com'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _emailController,
+              enabled: false,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email),
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.phone),
-              title: const Text('Téléphone'),
-              subtitle: const Text('+1234567890'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _phoneController,
+              decoration: const InputDecoration(
+                labelText: 'Téléphone',
+                prefixIcon: Icon(Icons.phone),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _save,
+              child: const Text('Sauvegarder'),
             ),
           ],
         ),

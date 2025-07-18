@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:memovox/core/layout/AppDrawer.dart';
+import 'package:memovox/services/theme_service.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _darkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _darkMode = themeController.value == ThemeMode.dark;
+  }
+
+  void _toggle(bool value) {
+    setState(() => _darkMode = value);
+    themeController.toggleTheme(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,8 +31,14 @@ class SettingsPage extends StatelessWidget {
         backgroundColor: Colors.indigo,
       ),
       drawer: const AppDrawer(),
-      body: const Center(
-        child: Text('Page de paramètres'),
+      body: ListView(
+        children: [
+          SwitchListTile(
+            title: const Text('Mode sombre'),
+            value: _darkMode,
+            onChanged: _toggle,
+          ),
+        ],
       ),
     );
   }
