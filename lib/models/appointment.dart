@@ -5,8 +5,6 @@ class Appointment {
   final String title;
   final String location;
   final DateTime dateTime;
-  final DateTime createdAt;
-  final DateTime updatedAt;
 
   Appointment({
     required this.id,
@@ -14,8 +12,6 @@ class Appointment {
     required this.title,
     required this.location,
     required this.dateTime,
-    required this.createdAt,
-    required this.updatedAt,
   });
 
   factory Appointment.fromJson(Map<String, dynamic> json) {

@@ -2,9 +2,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task.dart';
 
 class TaskService {
-  final SupabaseClient _supabase;
+  final dynamic _supabase;
 
-  TaskService() : _supabase = Supabase.instance.client;
+  TaskService({dynamic client}) : _supabase = client ?? Supabase.instance.client;
 
   Future<List<Task>> getTasks({String? projectId}) async {
     final query = _supabase
