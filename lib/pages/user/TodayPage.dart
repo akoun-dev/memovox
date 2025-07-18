@@ -4,80 +4,106 @@ import 'package:memovox/core/layout/AppDrawer.dart';
 import 'package:memovox/widgets/AppointmentTile.dart';
 import 'package:memovox/widgets/TaskCard.dart';
 import 'package:memovox/widgets/progress_line_painter.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class TodayPage extends StatelessWidget {
+class TodayPage extends StatefulWidget {
   const TodayPage({super.key});
 
-  /* ------------------ Données fictives ------------------ */
-  static const todayTasks = [
-    {
-      'description': 'Appeler le docteur',
-      'date': Duration(hours: 2),
-      'is_completed': false,
-      'created_at': '2025-07-17',
-      'updated_at': '2025-07-18T09:00:00',
-      'project_id': 'proj_medecin',
-    },
-    {
-      'description': 'Envoyer rapport client',
-      'date': Duration(hours: 4),
-      'is_completed': true,
-      'created_at': '2025-07-15',
-      'updated_at': '2025-07-18T10:00:00',
-      'project_id': 'proj_travail',
-    },
-    {
-      'description': 'Acheter cadeau',
-      'date': Duration(hours: -1),
-      'is_completed': false,
-      'created_at': '2025-07-16',
-      'updated_at': '2025-07-18T11:00:00',
-      'project_id': null,
-    },
-  ];
+  @override
+  State<TodayPage> createState() => _TodayPageState();
+}
 
-  static const todayAppointments = [
-    {
-      'title': 'Réunion MemoVox',
-      'location': 'Zoom',
-      'date': Duration(hours: 3),
-    },
-    {
-      'title': 'Dentiste',
-      'location': 'Clinique',
-      'date': Duration(hours: 6),
-    },
-  ];
+class _TodayPageState extends State<TodayPage> {
+  final SupabaseClient _supabase = Supabase.instance.client;
+  final stt.SpeechToText _speech = stt.SpeechToText();
 
-  /* ------------------------------------------------------ */
+  List<Map<String, dynamic>> _tasks = [];
+  List<Map<String, dynamic>> _appointments = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final uid = _supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    final tasks = await _supabase.from('tasks').select().eq('user_id', uid);
+    final appointments = await _supabase.from('appointments').select().eq('user_id', uid);
+
+    setState(() {
+      _tasks = List<Map<String, dynamic>>.from(tasks);
+      _appointments = List<Map<String, dynamic>>.from(appointments);
+      _loading = false;
+    });
+  }
+
+  Future<void> _startVoiceInput() async {
+    if (!await _speech.initialize()) return;
+    await _speech.listen(onResult: (res) async {
+      if (res.finalResult) {
+        final text = res.recognizedWords;
+        await _speech.stop();
+        await _handleVoiceCommand(text);
+      }
+    });
+  }
+
+  Future<void> _handleVoiceCommand(String command) async {
+    if (command.toLowerCase().contains('rendez')) {
+      await _supabase.from('appointments').insert({
+        'user_id': _supabase.auth.currentUser?.id,
+        'title': command,
+        'location': '',
+        'date_time': DateTime.now().toIso8601String(),
+      });
+    } else {
+      await _supabase.from('tasks').insert({
+        'user_id': _supabase.auth.currentUser?.id,
+        'description': command,
+      });
+    }
+    await _loadData();
+  }
+
+  Future<void> _toggleTaskStatus(Map<String, dynamic> task) async {
+    final newStatus = !(task['is_completed'] as bool);
+    await _supabase.from('tasks').update({'is_completed': newStatus}).eq('id', task['id']);
+    setState(() {
+      final idx = _tasks.indexWhere((t) => t['id'] == task['id']);
+      if (idx != -1) _tasks[idx]['is_completed'] = newStatus;
+    });
+  }
+
   List<Map<String, dynamic>> get _todaySorted {
-    final now = DateTime.now();
     final items = <Map<String, dynamic>>[
-      ...todayTasks.map((t) => {
+      ..._tasks.map((t) => {
         ...t,
         'type': 'task',
-        'dateTime': now.add(t['date'] as Duration),
-        'description': t['description'],
-        'project_id': t['project_id'],
-        'created_at': t['created_at'],
-        'updated_at': t['updated_at'],
+        'dateTime': DateTime.parse(t['due_date'] ?? t['date_time'] ?? t['created_at']),
       }),
-      ...todayAppointments.map((r) => {
+      ..._appointments.map((r) => {
         ...r,
         'type': 'rdv',
-        'dateTime': now.add(r['date'] as Duration),
+        'dateTime': DateTime.parse(r['date_time']),
       }),
     ];
     items.sort((a, b) => (a['dateTime'] as DateTime).compareTo(b['dateTime'] as DateTime));
     return items;
   }
 
-  int get _pending => todayTasks.where((t) => !(t['is_completed'] as bool)).length;
-  int get _completed => todayTasks.length - _pending;
-  int get _late => todayTasks.where((t) => !(t['is_completed'] as bool) && (t['date'] as Duration).inMinutes < 0).length;
-  int get _rdvCount => todayAppointments.length;
+  int get _pending => _tasks.where((t) => !(t['is_completed'] as bool)).length;
+  int get _completed => _tasks.length - _pending;
+  int get _late => _tasks.where((t) {
+        final date = DateTime.parse(t['due_date'] ?? t['date_time'] ?? t['created_at']);
+        return !(t['is_completed'] as bool) && date.isBefore(DateTime.now());
+      }).length;
+  int get _rdvCount => _appointments.length;
 
-  /* ------------------------------------------------------ */
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -111,14 +137,14 @@ class TodayPage extends StatelessWidget {
       ),
       drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {/* TODO: saisie vocale */},
+        onPressed: _startVoiceInput,
         icon: const Icon(Icons.mic),
         label: const Text('Parler'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
-        onRefresh: () async {},
+        onRefresh: _loadData,
         child: CustomScrollView(
           slivers: [
             // Header avec salutation
@@ -155,7 +181,7 @@ class TodayPage extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: _LateBanner(count: _late),
+                  child: _LateBanner(count: _late, tasks: _tasks),
                 ),
               ),
             
@@ -183,7 +209,10 @@ class TodayPage extends StatelessWidget {
             // Timeline des activités
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              sliver: _TodayTimelineSliver(items: _todaySorted),
+              sliver: _TodayTimelineSliver(
+                items: _todaySorted,
+                onToggleTask: _toggleTaskStatus,
+              ),
             ),
             
             // Progression hebdo
@@ -486,7 +515,8 @@ class _NextItemHighlight extends StatelessWidget {
 
 class _LateBanner extends StatelessWidget {
   final int count;
-  const _LateBanner({required this.count});
+  final List<Map<String, dynamic>> tasks;
+  const _LateBanner({required this.count, required this.tasks});
 
   @override
   Widget build(BuildContext context) {
@@ -516,10 +546,10 @@ class _LateBanner extends StatelessWidget {
                 context,
                 '/late-tasks',
                 arguments: {
-                  'tasks': TodayPage.todayTasks.where((t) =>
-                    !(t['is_completed'] as bool) &&
-                    (DateTime.now().add(t['date'] as Duration)).isBefore(DateTime.now())
-                  ).toList(),
+                  'tasks': tasks.where((t) {
+                    final date = DateTime.parse(t['due_date'] ?? t['date_time'] ?? t['created_at']);
+                    return !(t['is_completed'] as bool) && date.isBefore(DateTime.now());
+                  }).toList(),
                 },
               );
             },
@@ -536,7 +566,8 @@ class _LateBanner extends StatelessWidget {
 
 class _TodayTimelineSliver extends StatefulWidget {
   final List<Map<String, dynamic>> items;
-  const _TodayTimelineSliver({required this.items});
+  final Future<void> Function(Map<String, dynamic> task)? onToggleTask;
+  const _TodayTimelineSliver({required this.items, this.onToggleTask});
 
   @override
   State<_TodayTimelineSliver> createState() => _TodayTimelineSliverState();
@@ -549,6 +580,14 @@ class _TodayTimelineSliverState extends State<_TodayTimelineSliver> {
   void initState() {
     super.initState();
     _items = widget.items;
+  }
+
+  @override
+  void didUpdateWidget(covariant _TodayTimelineSliver oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.items != widget.items) {
+      _items = widget.items;
+    }
   }
 
   @override
@@ -605,16 +644,16 @@ class _TodayTimelineSliverState extends State<_TodayTimelineSliver> {
                     title: item['description'],
                     dueDate: item['dateTime'],
                     completed: item['is_completed'],
-                    onToggle: () {
+                    onToggle: () async {
                       setState(() {
-                        final taskIndex = _items.indexWhere(
-                          (t) => t['id'] == item['id']
-                        );
+                        final taskIndex = _items.indexWhere((t) => t['id'] == item['id']);
                         if (taskIndex != -1) {
                           _items[taskIndex]['is_completed'] = !_items[taskIndex]['is_completed'];
                         }
                       });
-                      // TODO: Implémenter la mise à jour dans Supabase
+                      if (widget.onToggleTask != null) {
+                        await widget.onToggleTask!(item);
+                      }
                     },
                     onTap: () {
                       Navigator.pushNamed(
