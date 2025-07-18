@@ -26,3 +26,41 @@ MemoVox est une application mobile intelligente qui vous aide à gérer vos tâc
 | Gestion d’état  | `Riverpod` (ou `Bloc`)     |
 
 ---
+
+## 🚀 Mise en place
+
+1. **Prérequis** : installez [Flutter](https://docs.flutter.dev/get-started/install) et, pour le développement local, la [CLI Supabase](https://supabase.com/docs/guides/cli).
+2. Clonez ce dépôt puis récupérez les dépendances :
+   ```bash
+   flutter pub get
+   ```
+3. (Facultatif) Lancez une instance Supabase locale et appliquez les migrations :
+   ```bash
+   supabase start
+   supabase db reset
+   ```
+
+## 🏗️ Compilation et exécution
+
+- Démarrage sur appareil ou émulateur mobile :
+  ```bash
+  flutter run
+  ```
+- Lancement dans le navigateur :
+  ```bash
+  flutter run -d chrome
+  ```
+- Construction d'un APK Android :
+  ```bash
+  flutter build apk
+  ```
+- Lancement des tests :
+  ```bash
+  flutter test
+  ```
+
+## 🤝 Contribuer
+
+1. Ouvrez une issue ou choisissez-en une existante avant de commencer.
+2. Créez une branche dédiée et veillez à respecter les règles de style définies dans `analysis_options.yaml`.
+3. Exécutez `flutter test` pour valider que tout passe avant de soumettre votre *pull request*.
