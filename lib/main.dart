@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:memovox/routes.dart';
 import 'package:memovox/services/auth_service.dart';
+import 'package:memovox/services/notification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -14,6 +15,7 @@ void main() async {
 
   final isAuthenticated = await AuthService.isAuthenticated();
   await initializeDateFormatting();
+  await NotificationService.init();
   runApp(Memovox(initialRoute: isAuthenticated ? '/today' : '/'));
 }
 
