@@ -27,6 +27,8 @@ class FakeTable {
   FakeFilter insert(Map<String, dynamic> data) {
     final newMap = Map<String, dynamic>.from(data);
     newMap['id'] ??= DateTime.now().millisecondsSinceEpoch.toString();
+    newMap.putIfAbsent('created_at', () => DateTime.now().toIso8601String());
+    newMap.putIfAbsent('updated_at', () => DateTime.now().toIso8601String());
     _data.add(newMap);
     return FakeFilter([newMap]);
   }

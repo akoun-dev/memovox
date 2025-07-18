@@ -45,6 +45,8 @@ void main() {
       'title': 'Dentist',
       'location': 'Clinic',
       'date_time': DateTime.parse('2025-01-01T09:00:00Z').toIso8601String(),
+      'created_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
     });
     final service = AppointmentService(client: client);
 
