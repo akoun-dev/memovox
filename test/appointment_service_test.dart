@@ -21,6 +21,8 @@ void main() {
         'title': 'Meet',
         'location': 'Home',
         'date_time': DateTime.parse('2025-01-01T10:00:00Z').toIso8601String(),
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
       });
     });
 
