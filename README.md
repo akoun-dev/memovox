@@ -4,7 +4,7 @@ MemoVox est une application mobile intelligente qui vous aide à gérer vos tâc
 
 ## 📱 Fonctionnalités clés
 
-- 🎙 Ajout vocal de tâches et de rendez-vous (Speech-to-Text)
+- 🎙 Ajout de tâches et de rendez-vous par saisie ou à la voix (Speech-to-Text)
 - ✅ Gestion des tâches (ajout, édition, suppression, statut)
 - 📆 Gestion des rendez-vous (date, heure, lieu, récurrence)
 - 🔔 Notifications automatiques

@@ -4,6 +4,7 @@ import 'package:memovox/core/layout/AppDrawer.dart';
 import 'package:memovox/widgets/AppointmentTile.dart';
 import 'package:memovox/widgets/TaskCard.dart';
 import 'package:memovox/widgets/progress_line_painter.dart';
+import 'package:memovox/services/notification_service.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -61,11 +62,19 @@ class _TodayPageState extends State<TodayPage> {
         'location': '',
         'date_time': DateTime.now().toIso8601String(),
       });
+      await NotificationService.showNotification(
+        title: 'Nouveau rendez-vous',
+        body: command,
+      );
     } else {
       await _supabase.from('tasks').insert({
         'user_id': _supabase.auth.currentUser?.id,
         'description': command,
       });
+      await NotificationService.showNotification(
+        title: 'Nouvelle tâche',
+        body: command,
+      );
     }
     await _loadData();
   }
