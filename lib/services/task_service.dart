@@ -16,8 +16,8 @@ class TaskService {
       query.eq('project_id', projectId);
     }
 
-    final data = await query;
-    return data.map((json) => Task.fromJson(json)).toList();
+    final List<dynamic> data = await query;
+    return List<Task>.from(data.map((json) => Task.fromJson(json as Map<String, dynamic>)));
   }
 
   Future<Task> createTask({

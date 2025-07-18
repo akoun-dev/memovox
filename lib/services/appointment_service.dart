@@ -7,11 +7,11 @@ class AppointmentService {
   AppointmentService({dynamic client})
       : _supabase = client ?? Supabase.instance.client;
   Future<List<Appointment>> getAppointments() async {
-    final data = await _supabase
+    final List<dynamic> data = await _supabase
         .from('appointments')
         .select()
         .eq('user_id', _supabase.auth.currentUser!.id);
-    return data.map((json) => Appointment.fromJson(json)).toList();
+    return List<Appointment>.from(data.map((json) => Appointment.fromJson(json as Map<String, dynamic>)));
   }
 
   Future<Appointment> createAppointment({
