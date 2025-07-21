@@ -195,7 +195,11 @@ class _TodayPageState extends State<TodayPage>
   Future<void> _showAddItemMenu() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => const AddItemMenu(),
+      builder: (context) => AddItemMenu(
+        onItemSelected: (type, method) {
+          Navigator.of(context).pop({'type': type, 'method': method});
+        },
+      ),
     );
 
     if (result == null) return;
