@@ -414,14 +414,6 @@ class _TodayPageState extends State<TodayPage>
     }).length;
   }
 
-  int get _appointmentsCount => _appointments.where((a) {
-    final dateStr = a['date_time'] as String?;
-    if (dateStr == null) return false;
-    final date = DateTime.tryParse(dateStr);
-    return date != null && date.isAfter(DateTime.now());
-  }).length;
-
-
 
   List<Map<String, dynamic>> get _todaySorted {
     final now = DateTime.now();
