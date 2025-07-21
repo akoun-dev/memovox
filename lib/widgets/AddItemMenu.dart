@@ -197,7 +197,6 @@ class _AddItemMenuState extends State<AddItemMenu>
             Expanded(
               child: TextButton.icon(
                 onPressed: () {
-                  Navigator.pop(context);
                   widget.onItemSelected?.call('task', 'quick');
                 },
                 icon: const Icon(Icons.add_circle_outline),
