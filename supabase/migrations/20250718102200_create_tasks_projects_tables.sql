@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
   description TEXT NOT NULL,
+  due_date TIMESTAMPTZ,
   is_completed BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

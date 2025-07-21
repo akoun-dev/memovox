@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
 import 'package:memovox/routes.dart';
 import 'package:memovox/services/auth_service.dart';
 import 'package:memovox/services/notification_service.dart';
@@ -17,15 +18,18 @@ void main() async {
   final isAuthenticated = await AuthService.isAuthenticated();
   await initializeDateFormatting();
   await NotificationService.init();
-  themeController = ThemeController();
+  final themeController = ThemeController();
   await themeController.loadTheme();
-  runApp(Memovox(initialRoute: isAuthenticated ? '/today' : '/'));
+  runApp(
+    ChangeNotifierProvider<ThemeController>.value(
+      value: themeController,
+      child: Memovox(initialRoute: isAuthenticated ? '/today' : '/'),
+    ),
+  );
 }
 
 // It's handy to then extract the Supabase client in a variable for later uses
 final supabase = Supabase.instance.client;
-late ThemeController themeController;
-
 class Memovox extends StatelessWidget {
   final String initialRoute;
 
@@ -33,6 +37,7 @@ class Memovox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Provider.of<ThemeController>(context, listen: false);
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeController,
       builder: (context, mode, _) {

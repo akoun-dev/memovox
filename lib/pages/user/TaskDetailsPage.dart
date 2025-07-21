@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:memovox/models/task.dart';
 
 class TaskDetailsPage extends StatelessWidget {
   final Map<String, dynamic> task;

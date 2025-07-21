@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:memovox/core/layout/AppDrawer.dart';
 import 'package:memovox/services/theme_service.dart';
+import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -11,10 +12,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _darkMode = false;
+  late final ThemeController themeController;
 
   @override
   void initState() {
     super.initState();
+    themeController = Provider.of<ThemeController>(context, listen: false);
     _darkMode = themeController.value == ThemeMode.dark;
   }
 

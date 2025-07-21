@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memovox/services/appointment_service.dart';
-import 'package:memovox/models/appointment.dart';
 
 import 'test_helpers/fake_supabase.dart';
 
