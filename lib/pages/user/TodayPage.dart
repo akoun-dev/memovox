@@ -27,6 +27,7 @@ class _TodayPageState extends State<TodayPage>
 
   List<Map<String, dynamic>> _tasks = [];
   List<Map<String, dynamic>> _appointments = [];
+  List<Map<String, dynamic>> _lateTasksList = [];
   bool _loading = true;
   bool _isListening = false;
   bool _speechAvailable = false;
@@ -484,6 +485,34 @@ class _TodayPageState extends State<TodayPage>
     return null;
   }
 
+  Future<void> _openLateTasks() async {
+    final now = DateTime.now();
+    _lateTasksList = _tasks.where((t) {
+      final done = t['is_completed'] as bool? ?? false;
+      if (done) return false;
+      final dueDateStr = t['due_date'] as String?;
+      if (dueDateStr == null) return false;
+      final dueDate = DateTime.tryParse(dueDateStr);
+      return dueDate != null && dueDate.isBefore(now);
+    }).map((t) {
+      final dateStr = t['due_date'] as String?;
+      DateTime? dt;
+      if (dateStr != null) dt = DateTime.tryParse(dateStr);
+      return {
+        'description': t['description'] ?? t['title'],
+        'dateTime': dt ?? now,
+        'is_completed': t['is_completed'] ?? false,
+      };
+    }).toList();
+
+    if (!mounted) return;
+    Navigator.pushNamed(
+      context,
+      '/late-tasks',
+      arguments: {'tasks': _lateTasksList},
+    );
+  }
+
   /* ----------------------------------------------------------
    *  UI
    * -------------------------------------------------------- */
@@ -510,9 +539,7 @@ class _TodayPageState extends State<TodayPage>
               label: Text('$_late'),
               child: const Icon(Icons.notifications_outlined),
             ),
-            onPressed: () {
-              // TODO: Naviguer vers la page des tâches en retard
-            },
+            onPressed: _openLateTasks,
           ),
         ],
       ),
@@ -542,6 +569,7 @@ class _TodayPageState extends State<TodayPage>
                     pendingCount: _pending,
                     completedCount: _completed,
                     todayAppointmentsCount: _todayAppointmentsCount,
+                    onLatePressed: _openLateTasks,
                   ),
                   if (_todaySorted.isEmpty)
                     const _EmptyToday()
@@ -568,6 +596,7 @@ class _HeaderSection extends StatelessWidget {
   final int pendingCount;
   final int completedCount;
   final int todayAppointmentsCount;
+  final VoidCallback onLatePressed;
 
   const _HeaderSection({
     this.next,
@@ -575,6 +604,7 @@ class _HeaderSection extends StatelessWidget {
     required this.pendingCount,
     required this.completedCount,
     required this.todayAppointmentsCount,
+    required this.onLatePressed,
   });
 
   @override
@@ -644,7 +674,7 @@ class _HeaderSection extends StatelessWidget {
           // Bannière de retard
           if (lateCount > 0) ...[
             const SizedBox(height: 12),
-            _LateBanner(count: lateCount),
+            _LateBanner(count: lateCount, onView: onLatePressed),
           ],
         ],
       ),
@@ -786,7 +816,8 @@ class _NextCard extends StatelessWidget {
 
 class _LateBanner extends StatelessWidget {
   final int count;
-  const _LateBanner({required this.count});
+  final VoidCallback onView;
+  const _LateBanner({required this.count, required this.onView});
 
   @override
   Widget build(BuildContext context) {
@@ -811,9 +842,7 @@ class _LateBanner extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
-              // TODO: Naviguer vers la liste des tâches en retard
-            },
+            onPressed: onView,
             child: Text(
               'Voir',
               style: TextStyle(color: Colors.red.shade700),
