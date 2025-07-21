@@ -9,6 +9,18 @@ import 'package:memovox/widgets/AddItemMenu.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+Map<String, dynamic> _toDetailMap(Map<String, dynamic> item) {
+  final map = Map<String, dynamic>.from(item);
+  final due = map.remove('due_date');
+  final date = map.remove('date_time');
+  final str = due ?? date;
+  if (str is String && str.isNotEmpty) {
+    final dt = DateTime.tryParse(str);
+    if (dt != null) map['dateTime'] = dt;
+  }
+  return map;
+}
+
 class TodayPage extends StatefulWidget {
   const TodayPage({super.key});
 
@@ -917,8 +929,24 @@ class _ActivityCard extends StatelessWidget {
               )
             : null,
         onTap: () {
-          // TODO: Naviguer vers les détails
-          debugPrint('Tapped on ${isTask ? 'task' : 'appointment'}: $title');
+          if (isTask) {
+            Navigator.pushNamed(
+              context,
+              '/task-details',
+              arguments: {
+                'task': _toDetailMap(item),
+                'onUpdate': onToggle,
+              },
+            );
+          } else {
+            Navigator.pushNamed(
+              context,
+              '/appointment-details',
+              arguments: {
+                'appointment': _toDetailMap(item),
+              },
+            );
+          }
         },
       ),
     );
