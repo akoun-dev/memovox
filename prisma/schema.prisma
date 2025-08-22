@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks       Task[]
+  appointments Appointment[]
+  voiceReminders VoiceReminder[]
+  reminderSettings ReminderSettings?
+  userSettings UserSettings?
+  aiSettings AISettings?
+  voiceSettings VoiceSettings?
+  notificationSettings NotificationSettings?
+}
+
+model Task {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  completed   Boolean     @default(false)
+  priority    Priority    @default(MEDIUM)
+  dueDate     DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  userId      String
+  emoji       String?
+  estimatedDuration Int?   // in minutes
+  isRecurring Boolean     @default(false)
+  recurringType RecurringType?
+  recurringInterval Int?   // number of days/weeks/months
+  recurringEndDate DateTime?
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  date        DateTime
+  duration    Int       @default(30) // in minutes
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  emoji       String?
+  reminderTime DateTime? // when to send reminder
+  isRecurring Boolean   @default(false)
+  recurringType RecurringType?
+  recurringInterval Int? // number of days/weeks/months
+  recurringEndDate DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VoiceReminder {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  audioUrl  String?
+  scheduledFor DateTime
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  type      ReminderType
+  relatedTaskId    String?
+  relatedAppointmentId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReminderSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  dailyReminderTime String @default("09:00") // HH:MM format
+  isEnabled Boolean  @default(true)
+  voiceEnabled Boolean @default(true)
+  reminderDays String @default("1,2,3,4,5,6,7") // Comma-separated days (1=Monday, 7=Sunday)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ReminderType {
+  TASK
+  APPOINTMENT
+  DAILY_SUMMARY
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RecurringType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+model UserSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  theme     String   @default("light") // light, dark, auto
+  language  String   @default("fr") // fr, en, es, de, it
+  timezone  String   @default("Europe/Paris")
+  dateFormat String @default("DD/MM/YYYY")
+  timeFormat String @default("24h") // 12h, 24h
+  weekStart String @default("monday") // monday, sunday
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AISettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  voiceRecognition     Boolean  @default(true)
+  smartSuggestions     Boolean  @default(true)
+  autoCategorization   Boolean  @default(true)
+  priorityPrediction   Boolean  @default(true)
+  timeEstimation       Boolean  @default(true)
+  rewriteAssistance    Boolean  @default(true)
+  creativityLevel      Int      @default(70) // 0-100
+  responseSpeed        String   @default("balanced") // fast, balanced, thorough
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VoiceSettings {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  voiceEnabled     Boolean  @default(true)
+  voiceType        String   @default("female") // female, male, neutral
+  voiceSpeed       Float    @default(1.0) // 0.5-2.0
+  voicePitch       Float    @default(1.0) // 0.5-2.0
+  dailyReminderTime String   @default("09:00")
+  reminderDays     String   @default("1,2,3,4,5") // comma-separated days (1=Monday, 7=Sunday)
+  voiceLanguage    String   @default("fr-FR")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationSettings {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  emailNotifications  Boolean  @default(true)
+  pushNotifications   Boolean  @default(true)
+  taskReminders       Boolean  @default(true)
+  appointmentReminders Boolean @default(true)
+  dailySummary        Boolean  @default(true)
+  weeklySummary       Boolean  @default(true)
+  reminderTime        String   @default("09:00")
+  quietHoursEnabled   Boolean  @default(false)
+  quietHoursStart     String   @default("22:00")
+  quietHoursEnd       String   @default("08:00")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
